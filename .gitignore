@@ -1,0 +1,8 @@
+# Idea Files #
+.idea/
+.gradle/
+build/
+*.iml
+atlassian-ide-plugin.xml
+
+*.class
