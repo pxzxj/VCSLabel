@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.ponshine.svnlabel</id>
     <name>SVNLabel</name>
-    <vendor email="zhangxiongjiang@ponshine.com" url="http://www.ponshine.com">ponshine</vendor>
+    <vendor email="pudge.zxj@gmail.com" url="https://github.com/pxzxj">zhangxiongjiang</vendor>
     <depends>Subversion</depends>
     <description><![CDATA[<html>
     Subversion label decoration right next to the file like they have in eclispe .<br/>
