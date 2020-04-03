@@ -29,34 +29,6 @@ public class MyCheckinHandler extends CheckinHandler {
         this.files = files;
     }
 
-    @Nullable
-    @Override
-    public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-        return super.getBeforeCheckinConfigurationPanel();
-    }
-
-    @Nullable
-    @Override
-    public UnnamedConfigurable getBeforeCheckinSettings() {
-        return super.getBeforeCheckinSettings();
-    }
-
-    @Nullable
-    @Override
-    public RefreshableOnComponent getAfterCheckinConfigurationPanel(Disposable parentDisposable) {
-        return super.getAfterCheckinConfigurationPanel(parentDisposable);
-    }
-
-    @Override
-    public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
-        return super.beforeCheckin(executor, additionalDataConsumer);
-    }
-
-    @Override
-    public ReturnResult beforeCheckin() {
-        return super.beforeCheckin();
-    }
-
     @Override
     public void checkinSuccessful() {
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -67,18 +39,4 @@ public class MyCheckinHandler extends CheckinHandler {
         });
     }
 
-    @Override
-    public void checkinFailed(List<VcsException> exception) {
-        super.checkinFailed(exception);
-    }
-
-    @Override
-    public void includedChangesChanged() {
-        super.includedChangesChanged();
-    }
-
-    @Override
-    public boolean acceptExecutor(CommitExecutor executor) {
-        return super.acceptExecutor(executor);
-    }
 }
