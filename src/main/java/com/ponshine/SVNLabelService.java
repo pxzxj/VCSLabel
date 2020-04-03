@@ -43,14 +43,6 @@ public class SVNLabelService implements Disposable {
         VirtualFile vFile =  node.getVirtualFile();
         String vcsMessage = null;
         if(svnVcs != null && vFile != null){
-            if(vFile instanceof NewVirtualFile){
-                NewVirtualFile nvFile = (NewVirtualFile) vFile;
-                boolean dirty = nvFile.isDirty();
-                if(dirty){
-                    LOG.warn("dirty file: " + nvFile.getPath());
-                }
-            }
-
             vcsMessage = getCache(vFile);
             if(vcsMessage == null){
                 pendingFileQueue.add(vFile);
