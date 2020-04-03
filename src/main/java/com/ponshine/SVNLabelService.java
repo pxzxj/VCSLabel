@@ -117,9 +117,11 @@ public class SVNLabelService implements Disposable {
                             String author = commitInfo.getAuthor();
                             long revisionNumber = commitInfo.getRevisionNumber();
                             Date date = commitInfo.getDate();
-                            SimpleDateFormat df = new SimpleDateFormat("yy-MM-dd aHH:mm", Locale.CHINA);
-                            String datestr = df.format(date);
-                            vcsMessage = " " + revisionNumber + " " + datestr + " " + author;
+                            if(date != null){
+                                SimpleDateFormat df = new SimpleDateFormat("yy-MM-dd aHH:mm", Locale.CHINA);
+                                String datestr = df.format(date);
+                                vcsMessage = " " + revisionNumber + " " + datestr + " " + author;
+                            }
                         }
                     }
                     addCache(file, vcsMessage);
