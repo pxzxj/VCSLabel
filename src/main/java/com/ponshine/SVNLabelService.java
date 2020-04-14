@@ -43,14 +43,6 @@ public class SVNLabelService implements Disposable {
         VirtualFile vFile =  node.getVirtualFile();
         String vcsMessage = null;
         if(svnVcs != null && vFile != null){
-            if(vFile instanceof NewVirtualFile){
-                NewVirtualFile nvFile = (NewVirtualFile) vFile;
-                boolean dirty = nvFile.isDirty();
-                if(dirty){
-                    LOG.warn("dirty file: " + nvFile.getPath());
-                }
-            }
-
             vcsMessage = getCache(vFile);
             if(vcsMessage == null){
                 pendingFileQueue.add(vFile);
@@ -125,9 +117,11 @@ public class SVNLabelService implements Disposable {
                             String author = commitInfo.getAuthor();
                             long revisionNumber = commitInfo.getRevisionNumber();
                             Date date = commitInfo.getDate();
-                            SimpleDateFormat df = new SimpleDateFormat("yy-MM-dd aHH:mm", Locale.CHINA);
-                            String datestr = df.format(date);
-                            vcsMessage = " " + revisionNumber + " " + datestr + " " + author;
+                            if(date != null){
+                                SimpleDateFormat df = new SimpleDateFormat("yy-MM-dd aHH:mm", Locale.CHINA);
+                                String datestr = df.format(date);
+                                vcsMessage = " " + revisionNumber + " " + datestr + " " + author;
+                            }
                         }
                     }
                     addCache(file, vcsMessage);
@@ -136,14 +130,14 @@ public class SVNLabelService implements Disposable {
                 }
                 if(poolCount > 0){
                     //backup solution: compare cache size, refresh when different
-                    LOG.warn("Refresh Project View: " + pendingFileQueue.size());
-                    LOG.warn("Cache Size: " + labelCache.size());
+                    LOG.debug("Refresh Project View: " + pendingFileQueue.size());
+                    LOG.debug("Cache Size: " + labelCache.size());
                     refreshProjectView();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
-                LOG.warn("current calculator count: " + calculatorCount.decrementAndGet());
+                LOG.debug("current calculator count: " + calculatorCount.decrementAndGet());
             }
         }
     }

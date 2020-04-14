@@ -1,15 +1,26 @@
 <idea-plugin>
     <id>com.ponshine.svnlabel</id>
     <name>SVNLabel</name>
-    <vendor email="zhangxiongjiang@ponshine.com" url="http://www.ponshine.com">ponshine</vendor>
+    <vendor email="pudge.zxj@gmail.com" url="https://github.com/pxzxj">zhangxiongjiang</vendor>
     <depends>Subversion</depends>
     <description><![CDATA[<html>
-    Subversion label decoration right next to the file like they have in eclispe .<br/>
+    Subversion label decoration right next to the file like they have in eclipse .<br/>
     Label shows SVN information on resources in projects under SVN control. <br/>
     Information includes the revision number, author and commit time. <br/>
     Do you like it? Give it a star at <a href="https://github.com/pxzxj/SVNLabel">GitHub</a>.
     <br><br>
     </html>]]></description>
+    <change-notes><![CDATA[
+       <h3>version 1.2</h3>
+      <ul>
+        <li>fix one NPE</li>
+        <li>remove some redundant code</li>
+      </ul>
+      <h3>version 1.1</h3>
+      <ul>
+        <li>Compatible with Idea 2019.3</li>
+      </ul>]]>
+    </change-notes>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
          on how to target different products -->
@@ -25,5 +36,6 @@
     <projectListeners>
         <listener class="com.ponshine.SVNUpdateNotification" topic="com.intellij.openapi.vcs.update.UpdatedFilesListener" />
     </projectListeners>
-    <idea-version since-build="193"/>
+
+    <idea-version since-build="193" until-build="201.*"/>
 </idea-plugin>
