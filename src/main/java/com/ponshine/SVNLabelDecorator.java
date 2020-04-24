@@ -3,9 +3,7 @@ package com.ponshine;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewNodeDecorator;
-import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
-import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.components.ServiceManager;
@@ -14,8 +12,12 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -23,20 +25,32 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SVNLabelDecorator implements ProjectViewNodeDecorator {
 
     private final Logger LOG = Logger.getInstance(getClass());
 
+    private final SVNLabelService labelService;
+    private final Set<VirtualFile> moduleContentRootSet = new HashSet<>();
+
+    public SVNLabelDecorator(Project project){
+        labelService = ServiceManager.getService(project, SVNLabelService.class);
+        ModuleManager moduleManager = ModuleManager.getInstance(project);
+        Module[] modules = moduleManager.getModules();
+        for(Module module : modules){
+            ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+            VirtualFile[] contentRoots = moduleRootManager.getContentRoots();
+            for(VirtualFile vf : contentRoots){
+                moduleContentRootSet.add(vf);
+            }
+        }
+    }
+
     @Override
     public void decorate(ProjectViewNode node, PresentationData data) {
-        boolean moduleNode = false;
-        if (node instanceof PsiDirectoryNode) {
-            PsiDirectoryNode dirNode = (PsiDirectoryNode) node;
-            final Object parentValue = dirNode.getParent().getValue();
-            moduleNode =  parentValue instanceof Project || parentValue instanceof ModuleGroup;
-        }
-        if(!moduleNode){
+        if(!(node instanceof PsiDirectoryNode) || !moduleContentRootSet.contains(node.getVirtualFile())){
             Color color = node.getColor();
             Color forcedForeground = data.getForcedTextForeground();
             String text = data.getPresentableText();
@@ -47,7 +61,6 @@ public class SVNLabelDecorator implements ProjectViewNodeDecorator {
                     data, forcedForeground != null ? forcedForeground : color, node);
             data.addText(text, simpleTextAttributes);
             if(!(node instanceof PsiDirectoryNode)){
-                SVNLabelService labelService = ServiceManager.getService(node.getProject(), SVNLabelService.class);
                 labelService.decorateSvnTag(node, data);
             }
         }
