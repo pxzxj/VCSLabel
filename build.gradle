@@ -3,8 +3,12 @@ plugins {
     id 'org.jetbrains.intellij' version '0.4.16'
 }
 
+patchPluginXml {
+    untilBuild '201.*'
+}
+
 group 'com.ponshine'
-version '1.0-SNAPSHOT'
+version '1.3'
 
 sourceCompatibility = 1.8
 
@@ -16,14 +20,12 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
+
+
+
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
     version '2019.3'
     plugins 'svn4idea'
     downloadSources true
-}
-patchPluginXml {
-    changeNotes """
-      Add change notes here.<br>
-      <em>most HTML tags may be used</em>"""
 }
