@@ -3,12 +3,8 @@ plugins {
     id 'org.jetbrains.intellij' version '0.4.16'
 }
 
-patchPluginXml {
-    untilBuild '201.*'
-}
-
 group 'com.ponshine'
-version '1.4'
+version '1.6'
 
 sourceCompatibility = 1.8
 
@@ -28,4 +24,5 @@ intellij {
     version '2019.3'
     plugins 'svn4idea'
     downloadSources true
+    updateSinceUntilBuild false
 }

@@ -11,6 +11,14 @@
     <br><br>
     </html>]]></description>
     <change-notes><![CDATA[
+      <h3>version 1.6</h3>
+      <ul>
+        <li>Compatible with any version Idea higher than 2019.3</li>
+      </ul>
+      <h3>version 1.5</h3>
+      <ul>
+        <li>show commit time according to system locale</li>
+      </ul>
       <h3>version 1.4</h3>
       <ul>
         <li>fix a bug that display module name repeatably in multi module project</li>
@@ -45,5 +53,5 @@
         <listener class="com.ponshine.SVNUpdateNotification" topic="com.intellij.openapi.vcs.update.UpdatedFilesListener" />
     </projectListeners>
 
-    <idea-version since-build="193" until-build="201.*"/>
+    <idea-version since-build="193"/>
 </idea-plugin>
