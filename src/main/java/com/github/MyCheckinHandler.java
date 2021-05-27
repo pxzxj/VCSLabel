@@ -1,4 +1,4 @@
-package com.ponshine;
+package com.github;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;

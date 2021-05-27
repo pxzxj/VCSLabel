@@ -3,7 +3,7 @@ plugins {
     id 'org.jetbrains.intellij' version '0.4.16'
 }
 
-group 'com.ponshine'
+group 'com.github'
 version '1.6'
 
 sourceCompatibility = 1.8

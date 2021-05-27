@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>com.ponshine.svnlabel</id>
+    <id>com.github.svnlabel</id>
     <name>SVNLabel</name>
     <vendor email="pudge.zxj@gmail.com" url="https://github.com/pxzxj">zhangxiongjiang</vendor>
     <depends>Subversion</depends>
@@ -44,13 +44,13 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
-        <projectViewNodeDecorator implementation="com.ponshine.SVNLabelDecorator"/>
-        <projectService serviceImplementation="com.ponshine.SVNLabelService" />
-        <vcsCheckinHandlerFactory implementation="com.ponshine.SVNCheckinHandlerFactory" />
+        <projectViewNodeDecorator implementation="com.github.SVNLabelDecorator"/>
+        <projectService serviceImplementation="com.github.SVNLabelService" />
+        <vcsCheckinHandlerFactory implementation="com.github.SVNCheckinHandlerFactory" />
     </extensions>
 
     <projectListeners>
-        <listener class="com.ponshine.SVNUpdateNotification" topic="com.intellij.openapi.vcs.update.UpdatedFilesListener" />
+        <listener class="com.github.SVNUpdateNotification" topic="com.intellij.openapi.vcs.update.UpdatedFilesListener" />
     </projectListeners>
 
     <idea-version since-build="193"/>
