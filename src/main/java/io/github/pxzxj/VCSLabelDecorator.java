@@ -1,4 +1,4 @@
-package com.github;
+package io.github.pxzxj;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -25,26 +25,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SVNLabelDecorator implements ProjectViewNodeDecorator {
+public class VCSLabelDecorator implements ProjectViewNodeDecorator {
 
     private final Logger LOG = Logger.getInstance(getClass());
 
-    private final SVNLabelService labelService;
+    private final VCSLabelService labelService;
     private final Set<VirtualFile> moduleContentRootSet = new HashSet<>();
 
-    public SVNLabelDecorator(Project project){
-        labelService = ServiceManager.getService(project, SVNLabelService.class);
+    public VCSLabelDecorator(Project project){
+        labelService = ServiceManager.getService(project, VCSLabelService.class);
         ModuleManager moduleManager = ModuleManager.getInstance(project);
         Module[] modules = moduleManager.getModules();
         for(Module module : modules){
             ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
             VirtualFile[] contentRoots = moduleRootManager.getContentRoots();
-            for(VirtualFile vf : contentRoots){
-                moduleContentRootSet.add(vf);
-            }
+            moduleContentRootSet.addAll(Arrays.asList(contentRoots));
         }
     }
 
@@ -58,10 +57,10 @@ public class SVNLabelDecorator implements ProjectViewNodeDecorator {
                 text = node.getName();
             }
             SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(
-                    data, forcedForeground != null ? forcedForeground : color, node);
+                    data, forcedForeground != null ? forcedForeground : color);
             data.addText(text, simpleTextAttributes);
             if(!(node instanceof PsiDirectoryNode)){
-                labelService.decorateSvnTag(node, data);
+                labelService.decorateVcsTag(node, data);
             }
         }
     }
@@ -76,7 +75,7 @@ public class SVNLabelDecorator implements ProjectViewNodeDecorator {
         return EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
     }
 
-    private SimpleTextAttributes getSimpleTextAttributes(@NotNull PresentationData presentation, Color color, @NotNull Object node) {
+    private SimpleTextAttributes getSimpleTextAttributes(@NotNull PresentationData presentation, Color color) {
         SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(presentation, getScheme());
 
         return addColorToSimpleTextAttributes(simpleTextAttributes, color);

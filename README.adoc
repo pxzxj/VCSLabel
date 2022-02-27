@@ -1,0 +1,16 @@
+= SVNLabel
+
+仿照Eclipse开发的用于展示SVN文件的版本号提交者和提交时间的IDEA插件
+
+最终效果如下所示
+
+image::https://plugins.jetbrains.com/files/14018/screenshot_21593.png[]
+
+== NOTE
+* UpdatedFilesListener解决更新后刷新label问题，
+不过需要确认它能否覆盖Git的其它场景如(切换分支、rebase、merge、push)等，如果不能就要寻求其它VCS相关的Listener
+* Gradle项目名称重复问题
+
+GitRepositoryChangeListener
+
+GitRepositoryManager

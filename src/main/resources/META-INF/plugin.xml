@@ -1,8 +1,9 @@
 <idea-plugin>
-    <id>com.github.svnlabel</id>
-    <name>SVNLabel</name>
-    <vendor email="pudge.zxj@gmail.com" url="https://github.com/pxzxj">zhangxiongjiang</vendor>
+    <id>com.ponshine.svnlabel</id>
+    <name>VCSLabel</name>
+    <vendor email="pudge.zxj@gmail.com" url="https://github.com/pxzxj">pxzxj</vendor>
     <depends>Subversion</depends>
+    <depends>Git4Idea</depends>
     <description><![CDATA[<html>
     Subversion label decoration right next to the file like they have in eclipse .<br/>
     Label shows SVN information on resources in projects under SVN control. <br/>
@@ -44,13 +45,14 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
-        <projectViewNodeDecorator implementation="com.github.SVNLabelDecorator"/>
-        <projectService serviceImplementation="com.github.SVNLabelService" />
-        <vcsCheckinHandlerFactory implementation="com.github.SVNCheckinHandlerFactory" />
+        <projectViewNodeDecorator implementation="io.github.pxzxj.VCSLabelDecorator"/>
+        <vcsCheckinHandlerFactory implementation="io.github.pxzxj.SVNCheckinHandlerFactory"/>
+        <vcsCheckinHandlerFactory implementation="io.github.pxzxj.GitCheckinHandlerFactory"/>
     </extensions>
 
     <projectListeners>
-        <listener class="com.github.SVNUpdateNotification" topic="com.intellij.openapi.vcs.update.UpdatedFilesListener" />
+        <listener class="io.github.pxzxj.SVNUpdateListener" topic="com.intellij.openapi.vcs.update.UpdatedFilesListener" />
+        <listener class="io.github.pxzxj.RefreshLabelGitRepositoryChangeListener" topic="git4idea.repo.GitRepositoryChangeListener" />
     </projectListeners>
 
     <idea-version since-build="193"/>

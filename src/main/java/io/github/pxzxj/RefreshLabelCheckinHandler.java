@@ -1,4 +1,4 @@
-package com.github;
+package io.github.pxzxj;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -8,14 +8,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
 
-public class MyCheckinHandler extends CheckinHandler {
+public class RefreshLabelCheckinHandler extends CheckinHandler {
 
-    private List<VirtualFile> files;
+    private final List<VirtualFile> files;
 
-    private SVNLabelService svnLabelService;
+    private final VCSLabelService vcsLabelService;
 
-    public MyCheckinHandler(Project project, List<VirtualFile> files){
-        svnLabelService =  ServiceManager.getService(project, SVNLabelService.class);
+    public RefreshLabelCheckinHandler(Project project, List<VirtualFile> files){
+        vcsLabelService =  ServiceManager.getService(project, VCSLabelService.class);
         this.files = files;
     }
 
@@ -23,9 +23,9 @@ public class MyCheckinHandler extends CheckinHandler {
     public void checkinSuccessful() {
         ApplicationManager.getApplication().invokeLater(() -> {
             for(VirtualFile file : files){
-                svnLabelService.evict(file);
+                vcsLabelService.evict(file);
             }
-            svnLabelService.refreshProjectView();
+            vcsLabelService.refreshProjectView();
         });
     }
 

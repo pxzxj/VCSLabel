@@ -1,4 +1,4 @@
-package com.github;
+package io.github.pxzxj;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -11,17 +11,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Set;
 
-public class SVNUpdateNotification implements UpdatedFilesListener {
+public class SVNUpdateListener implements UpdatedFilesListener {
 
-    private final Logger LOG = Logger.getInstance(SVNUpdateNotification.class);
+    private final Logger LOG = Logger.getInstance(SVNUpdateListener.class);
 
     private Project project;
 
-    public SVNUpdateNotification(){
+    public SVNUpdateListener(){
 
     }
 
-    public SVNUpdateNotification(Project project){
+    public SVNUpdateListener(Project project){
         this.project = project;
     }
 
@@ -31,7 +31,8 @@ public class SVNUpdateNotification implements UpdatedFilesListener {
         LOG.warn("Get a Update Notification!");
         ApplicationManager.getApplication().invokeLater(() -> {
             LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-            SVNLabelService labelService = ServiceManager.getService(project, SVNLabelService.class);
+            VCSLabelService labelService = ServiceManager.getService(project, VCSLabelService.class);
+
             for(String path : strings){
                 VirtualFile file = localFileSystem.findFileByPath(FilePathsHelper.convertPath(path));
                 if(file != null){
