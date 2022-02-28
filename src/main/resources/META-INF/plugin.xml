@@ -8,7 +8,7 @@
     Subversion label decoration right next to the file like they have in eclipse .<br/>
     Label shows SVN information on resources in projects under SVN control. <br/>
     Information includes the revision number, author and commit time. <br/>
-    Do you like it? Give it a star at <a href="https://github.com/pxzxj/SVNLabel">GitHub</a>.
+    Do you like it? Give it a star at <a href="https://github.com/pxzxj/VCSLabel">GitHub</a>.
     <br><br>
     </html>]]></description>
     <change-notes><![CDATA[
@@ -45,14 +45,13 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
-        <projectViewNodeDecorator implementation="io.github.pxzxj.VCSLabelDecorator"/>
-        <vcsCheckinHandlerFactory implementation="io.github.pxzxj.SVNCheckinHandlerFactory"/>
-        <vcsCheckinHandlerFactory implementation="io.github.pxzxj.GitCheckinHandlerFactory"/>
+        <projectViewNodeDecorator implementation="io.github.pxzxj.VCSLabelDecorator" />
+        <vcsCheckinHandlerFactory implementation="io.github.pxzxj.SVNCheckinHandlerFactory" />
     </extensions>
 
     <projectListeners>
         <listener class="io.github.pxzxj.SVNUpdateListener" topic="com.intellij.openapi.vcs.update.UpdatedFilesListener" />
-        <listener class="io.github.pxzxj.RefreshLabelGitRepositoryChangeListener" topic="git4idea.repo.GitRepositoryChangeListener" />
+        <listener class="io.github.pxzxj.GitRepositoryChangeListenerImpl" topic="git4idea.repo.GitRepositoryChangeListener" />
     </projectListeners>
 
     <idea-version since-build="193"/>

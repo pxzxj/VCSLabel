@@ -11,16 +11,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Version;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.LocalFilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.vcs.log.Hash;
 import git4idea.GitFileRevision;
+import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.branch.GitBranchesCollection;
 import git4idea.history.GitHistoryProvider;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
@@ -29,6 +35,7 @@ import org.jetbrains.idea.svn.info.Info;
 
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Set;
@@ -41,23 +48,32 @@ public final class VCSLabelService implements Disposable {
     private final Logger LOG = Logger.getInstance(VCSLabelService.class);
 
     private final Project project;
+    private final FilePath projectFilePath;
     private final Locale locale;
     private SvnVcs svnVcs;
     private GitVcs gitVcs;
     private GitHistoryProvider vcsHistoryProvider;
+    private CommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> committedChangesProvider;
+    private GitRepository gitRepository;
+    private RepositoryLocation repositoryLocation;
+    private ConcurrentHashMap<String, String> latestBranchRevision = new ConcurrentHashMap<>();
+
     private final VcsContextFactory vcsContextFactory;
     private final BlockingQueue<VirtualFile> pendingFileQueue = new LinkedBlockingDeque<>();
     private final Set<String> calculatingFileSet = new CopyOnWriteArraySet<>();
     private final ConcurrentHashMap<String, String> labelCache = new ConcurrentHashMap<>();
     private final AtomicInteger calculatorCount = new AtomicInteger();
     private final ExecutorService executorService = Executors.newFixedThreadPool(5);
+    private final ExecutorService handlerService = Executors.newSingleThreadExecutor();
 
     public VCSLabelService(Project project){
         this.project = project;
         locale = Locale.getDefault() != null ? Locale.getDefault() : Locale.US;
         vcsContextFactory = VcsContextFactory.SERVICE.getInstance();
         Path projectPath = ProjectUtil.getProjectPath(project.getName());
-        FilePath projectFilePath = new LocalFilePath(projectPath.toAbsolutePath().toString(), true);
+        projectPath = Path.of("D:\\ideaprojects\\boottest");
+        //TODO: 移除临时测试代码 projectPath = Path.of("D:\\ideaprojects\\boottest");
+        projectFilePath = new LocalFilePath(projectPath.toAbsolutePath().toString(), true);
         svnVcs = SvnVcs.getInstance(project);
         if(svnVcs != null) {
             Version version = null;
@@ -73,8 +89,10 @@ public final class VCSLabelService implements Disposable {
         gitVcs = (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(GitVcs.NAME);
         ProgressManager.checkCanceled();
         if(gitVcs != null) {
-            vcsHistoryProvider = gitVcs.getVcsHistoryProvider();
-            if(!GitUtil.isUnderGit(projectFilePath)) {
+            if(GitUtil.isGitRoot(projectPath)) {
+                vcsHistoryProvider = gitVcs.getVcsHistoryProvider();
+                committedChangesProvider = gitVcs.getCommittedChangesProvider();
+            } else {
                 gitVcs = null;
             }
         }
@@ -126,15 +144,24 @@ public final class VCSLabelService implements Disposable {
         });
     }
 
+    public void handleGitChangeEvent(GitRepository gp) {
+        if(gitRepository == null) {
+            gitRepository = gp;
+            repositoryLocation = committedChangesProvider.getLocationFor(projectFilePath);
+        }
+        handlerService.submit(new GitRepositoryChangeHandler());
+    }
+
     @Override
     public void dispose() {
         pendingFileQueue.clear();
         calculatingFileSet.clear();
         labelCache.clear();
         executorService.shutdown();
+        handlerService.shutdown();
     }
 
-    class LabelCalculator implements Runnable{
+    private class LabelCalculator implements Runnable{
 
         @Override
         public void run() {
@@ -186,6 +213,45 @@ public final class VCSLabelService implements Disposable {
             } finally {
                 LOG.debug("current calculator count: " + calculatorCount.decrementAndGet());
             }
+        }
+    }
+
+    private class GitRepositoryChangeHandler implements Runnable {
+
+        @Override
+        public void run() {
+            GitBranchesCollection branches = gitRepository.getBranches();
+            for(GitLocalBranch gitLocalBranch : branches.getLocalBranches()) {
+                String name = gitLocalBranch.getName();
+                Hash hash = branches.getHash(gitLocalBranch);
+                String revision = hash != null ? hash.asString().substring(0, 16) : "";
+                String value = latestBranchRevision.putIfAbsent(name, revision);
+                if(value != null && !revision.equals(value)) {
+                    ChangeBrowserSettings changeBrowserSettings = new RangeChangeBrowserSettings(value, revision);
+
+                }
+            }
+        }
+    }
+
+    private static class RangeChangeBrowserSettings extends ChangeBrowserSettings {
+
+        private String beforeRevision;
+        private String afterRevision;
+
+        public RangeChangeBrowserSettings(String beforeRevision, String afterRevision) {
+            this.beforeRevision = beforeRevision;
+            this.afterRevision = afterRevision;
+        }
+
+        @Override
+        public @Nullable Long getChangeBeforeFilter() {
+            return Long.parseLong(beforeRevision, 16);
+        }
+
+        @Override
+        public @Nullable Long getChangeAfterFilter() {
+            return Long.parseLong(afterRevision, 16);
         }
     }
 }

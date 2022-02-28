@@ -8,7 +8,9 @@ import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.update.UpdatedFilesListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 
+import java.io.File;
 import java.util.Set;
 
 public class SVNUpdateListener implements UpdatedFilesListener {
@@ -42,4 +44,5 @@ public class SVNUpdateListener implements UpdatedFilesListener {
             labelService.refreshProjectView();
         });
     }
+
 }
