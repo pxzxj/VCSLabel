@@ -1,6 +1,5 @@
 package io.github.pxzxj;
 
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
@@ -10,11 +9,13 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Version;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.vcs.log.Hash;
@@ -25,20 +26,13 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.history.GitHistoryProvider;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
-import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 
-import java.nio.file.Path;
+import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -48,15 +42,14 @@ public final class VCSLabelService implements Disposable {
     private final Logger LOG = Logger.getInstance(VCSLabelService.class);
 
     private final Project project;
-    private final FilePath projectFilePath;
+    private VirtualFile projectVirtualFile;
     private final Locale locale;
     private SvnVcs svnVcs;
     private GitVcs gitVcs;
     private GitHistoryProvider vcsHistoryProvider;
-    private CommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> committedChangesProvider;
     private GitRepository gitRepository;
-    private RepositoryLocation repositoryLocation;
-    private ConcurrentHashMap<String, String> latestBranchRevision = new ConcurrentHashMap<>();
+    private String currentBranchName;
+    private final ConcurrentHashMap<String, String> latestBranchRevision = new ConcurrentHashMap<>();
 
     private final VcsContextFactory vcsContextFactory;
     private final BlockingQueue<VirtualFile> pendingFileQueue = new LinkedBlockingDeque<>();
@@ -70,30 +63,21 @@ public final class VCSLabelService implements Disposable {
         this.project = project;
         locale = Locale.getDefault() != null ? Locale.getDefault() : Locale.US;
         vcsContextFactory = VcsContextFactory.SERVICE.getInstance();
-        Path projectPath = ProjectUtil.getProjectPath(project.getName());
-        projectPath = Path.of("D:\\ideaprojects\\boottest");
-        //TODO: 移除临时测试代码 projectPath = Path.of("D:\\ideaprojects\\boottest");
-        projectFilePath = new LocalFilePath(projectPath.toAbsolutePath().toString(), true);
-        svnVcs = SvnVcs.getInstance(project);
-        if(svnVcs != null) {
-            Version version = null;
-            try {
-                version = svnVcs.getCommandLineFactory().createVersionClient().getVersion();
-            } catch (SvnBindException e) {
-                LOG.debug(e.getMessage());
-            }
-            if(version == null || !SvnUtil.isSvnVersioned(svnVcs, projectFilePath.getIOFile())) {
+        String projectPath = project.getBasePath();
+        if(projectPath != null) {
+            projectVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(projectPath));
+            svnVcs = SvnVcs.getInstance(project);
+            if(svnVcs != null && !SVNRootUtil.isSVNRoot(projectPath)) {
                 svnVcs = null;
             }
-        }
-        gitVcs = (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(GitVcs.NAME);
-        ProgressManager.checkCanceled();
-        if(gitVcs != null) {
-            if(GitUtil.isGitRoot(projectPath)) {
-                vcsHistoryProvider = gitVcs.getVcsHistoryProvider();
-                committedChangesProvider = gitVcs.getCommittedChangesProvider();
-            } else {
-                gitVcs = null;
+            gitVcs = (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(GitVcs.NAME);
+            ProgressManager.checkCanceled();
+            if(gitVcs != null) {
+                if(GitUtil.isGitRoot(projectPath)) {
+                    vcsHistoryProvider = gitVcs.getVcsHistoryProvider();
+                } else {
+                    gitVcs = null;
+                }
             }
         }
     }
@@ -147,7 +131,6 @@ public final class VCSLabelService implements Disposable {
     public void handleGitChangeEvent(GitRepository gp) {
         if(gitRepository == null) {
             gitRepository = gp;
-            repositoryLocation = committedChangesProvider.getLocationFor(projectFilePath);
         }
         handlerService.submit(new GitRepositoryChangeHandler());
     }
@@ -163,11 +146,21 @@ public final class VCSLabelService implements Disposable {
 
     private class LabelCalculator implements Runnable{
 
+        private CountDownLatch latch;
+
+        public LabelCalculator() {
+        }
+
+        public LabelCalculator(CountDownLatch latch) {
+            this.latch = latch;
+        }
+
         @Override
         public void run() {
+            VirtualFile file = null;
             try {
                 int poolCount = 0;
-                VirtualFile file = pendingFileQueue.poll(1, TimeUnit.SECONDS);
+                file = pendingFileQueue.poll(1, TimeUnit.SECONDS);
                 SimpleDateFormat df = new SimpleDateFormat("yy-MM-dd aHH:mm", locale);
                 while(file != null && calculatingFileSet.add(file.getPath())){
                     poolCount++;
@@ -199,7 +192,6 @@ public final class VCSLabelService implements Disposable {
                         }
                     }
                     addCache(file, vcsMessage);
-                    calculatingFileSet.remove(file.getPath());
                     file = pendingFileQueue.poll(1, TimeUnit.SECONDS);
                 }
                 if(poolCount > 0){
@@ -212,6 +204,12 @@ public final class VCSLabelService implements Disposable {
                 e.printStackTrace();
             } finally {
                 LOG.debug("current calculator count: " + calculatorCount.decrementAndGet());
+                if(file != null) {
+                    calculatingFileSet.remove(file.getPath());
+                }
+                if(latch != null) {
+                    latch.countDown();
+                }
             }
         }
     }
@@ -221,37 +219,68 @@ public final class VCSLabelService implements Disposable {
         @Override
         public void run() {
             GitBranchesCollection branches = gitRepository.getBranches();
+            String oldCurrentBranchName = currentBranchName;
+            currentBranchName = gitRepository.getCurrentBranchName();
+            if(currentBranchName == null) {
+                return;
+            }
+            boolean branchChanged = oldCurrentBranchName != null && !oldCurrentBranchName.equals(currentBranchName);
             for(GitLocalBranch gitLocalBranch : branches.getLocalBranches()) {
                 String name = gitLocalBranch.getName();
                 Hash hash = branches.getHash(gitLocalBranch);
                 String revision = hash != null ? hash.asString().substring(0, 16) : "";
-                String value = latestBranchRevision.putIfAbsent(name, revision);
-                if(value != null && !revision.equals(value)) {
-                    ChangeBrowserSettings changeBrowserSettings = new RangeChangeBrowserSettings(value, revision);
-
+                String value = latestBranchRevision.put(name, revision);
+                if(branchChanged) {
+                    labelCache.clear();
+                    refreshProjectView();
+                } else if(value != null && !revision.equals(value) && name.equals(currentBranchName)) {
+                    try {
+                        List<CommittedChangeList> committedChanges = getCommittedChanges(revision, value);
+                        Set<VirtualFile> changedFileSet = new HashSet<>();
+                        for(CommittedChangeList committedChangeList : committedChanges) {
+                            Collection<Change> changes = committedChangeList.getChanges();
+                            for(Change change : changes) {
+                                VirtualFile virtualFile = change.getVirtualFile();
+                                if(virtualFile != null) {
+                                    evict(virtualFile);
+                                    changedFileSet.add(virtualFile);
+                                }
+                            }
+                        }
+                        if(!changedFileSet.isEmpty()) {
+                            pendingFileQueue.addAll(changedFileSet);
+                            CountDownLatch latch = new CountDownLatch(3);
+                            for (int i = 0; i < 3; i++) {
+                                executorService.submit(new LabelCalculator(latch));
+                            }
+                            latch.await();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
+
+        private List<CommittedChangeList> getCommittedChanges(String beforeRev, String afterRev) {
+            List<CommittedChangeList> result = new ArrayList<>();
+            try {
+                GitUtil.getLocalCommittedChanges(project, projectVirtualFile, h -> {
+                    if (beforeRev != null && afterRev != null) {
+                        h.addParameters(afterRev + ".." + beforeRev);
+                    }
+                    else if (beforeRev != null) {
+                        h.addParameters(beforeRev);
+                    }
+                    else if (afterRev != null) {
+                        h.addParameters(afterRev + "..");
+                    }
+                }, result::add, false);
+            } catch (VcsException e) {
+                e.printStackTrace();
+            }
+            return result;
+        }
     }
 
-    private static class RangeChangeBrowserSettings extends ChangeBrowserSettings {
-
-        private String beforeRevision;
-        private String afterRevision;
-
-        public RangeChangeBrowserSettings(String beforeRevision, String afterRevision) {
-            this.beforeRevision = beforeRevision;
-            this.afterRevision = afterRevision;
-        }
-
-        @Override
-        public @Nullable Long getChangeBeforeFilter() {
-            return Long.parseLong(beforeRevision, 16);
-        }
-
-        @Override
-        public @Nullable Long getChangeAfterFilter() {
-            return Long.parseLong(afterRevision, 16);
-        }
-    }
 }
