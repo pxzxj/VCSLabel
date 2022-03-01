@@ -9,8 +9,8 @@ Also show author in parentheses when committer and author are not the same.
 最终效果如下图所示
 
 .svn
-image::https://plugins.jetbrains.com/files/14018/screenshot_21593.png[400,300]
+image::https://plugins.jetbrains.com/files/14018/screenshot_21593.png[800,600]
 
 .git
-image::https://plugins.jetbrains.com/files/14018/screenshot_cb27181e-a552-4a89-afa5-6e603a55942b[400,300]
+image::https://plugins.jetbrains.com/files/14018/screenshot_cb27181e-a552-4a89-afa5-6e603a55942b[800,600]
 
