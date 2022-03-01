@@ -5,13 +5,18 @@
     <depends>Subversion</depends>
     <depends>Git4Idea</depends>
     <description><![CDATA[<html>
-    Subversion label decoration right next to the file like they have in eclipse .<br/>
-    Label shows SVN information on resources in projects under SVN control. <br/>
-    Information includes the revision number, author and commit time. <br/>
+    The plugin adds label decoration right next to the project file when the project is under SVN or Git Control. <br/>
+    Label information includes the revision number, committer and commit time. <br/>
+    Also show author in parentheses when committer and author are not the same. <br>
     Do you like it? Give it a star at <a href="https://github.com/pxzxj/VCSLabel">GitHub</a>.
     <br><br>
     </html>]]></description>
     <change-notes><![CDATA[
+      <h3>version 2.1</h3>
+      <ul>
+        <li>add Git support</li>
+        <li>rename to VCSLabel</li>
+      </ul>
       <h3>version 1.6</h3>
       <ul>
         <li>Compatible with any version Idea higher than 2019.3</li>

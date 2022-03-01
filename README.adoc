@@ -1,16 +1,14 @@
 = VCSLabel
 
-仿照Eclipse开发的用于展示SVN文件的版本号提交者和提交时间的IDEA插件
+The plugin adds label decoration right next to the project file when the project is under SVN or Git Control.
+Label information includes the revision number, committer and commit time.
+Also show author in parentheses when committer and author are not the same.
 
-最终效果如下所示
+这个插件会在项目文件后面添加一个标签如果项目是一个Git仓库或者SVN仓库，标签内容包括版本号、提交者名称和提交时间， +
+如果提交者和作者不是同一个人，还会在括号中显示作者名称
 
+最终效果如下图所示
+
+.svn
 image::https://plugins.jetbrains.com/files/14018/screenshot_21593.png[]
 
-== NOTE
-* UpdatedFilesListener解决更新后刷新label问题，
-不过需要确认它能否覆盖Git的其它场景如(切换分支、rebase、merge、push)等，如果不能就要寻求其它VCS相关的Listener
-* Gradle项目名称重复问题
-
-GitRepositoryChangeListener
-
-GitRepositoryManager
