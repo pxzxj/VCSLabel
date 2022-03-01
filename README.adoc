@@ -4,11 +4,13 @@ The plugin adds label decoration right next to the project file when the project
 Label information includes the revision number, committer and commit time.
 Also show author in parentheses when committer and author are not the same.
 
-这个插件会在项目文件后面添加一个标签如果项目是一个Git仓库或者SVN仓库，标签内容包括版本号、提交者名称和提交时间， +
-如果提交者和作者不是同一个人，还会在括号中显示作者名称
+这个插件会在项目文件后面添加一个标签如果项目是一个Git仓库或者SVN仓库，标签内容包括版本号、提交者名称和提交时间，如果提交者和作者不是同一个人，还会在括号中显示作者名称。
 
 最终效果如下图所示
 
 .svn
 image::https://plugins.jetbrains.com/files/14018/screenshot_21593.png[]
+
+.git
+image::https://plugins.jetbrains.com/files/14018/screenshot_cb27181e-a552-4a89-afa5-6e603a55942b[]
 
