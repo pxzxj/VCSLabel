@@ -173,13 +173,14 @@ public final class VCSLabelService implements Disposable {
                             long revisionNumber = commitInfo.getRevisionNumber();
                             Date date = commitInfo.getDate();
                             if(date != null){
-                                vcsMessage = "  " + revisionNumber + " " + df.format(date) + " " + author;
+                                vcsMessage = " " + revisionNumber + " " + df.format(date) + " " + author;
                             }
                         }
                     } else if(gitVcs != null) {
                         FilePath filePath = vcsContextFactory.createFilePathOn(file);
                         GitFileRevision lastRevision = (GitFileRevision) vcsHistoryProvider.getLastRevision(filePath);
                         if(lastRevision != null) {
+                            String shortRevision = lastRevision.getRevisionNumber().asString().substring(0, 8);
                             String committerName = lastRevision.getCommitterName();
                             Date commitDate = lastRevision.getRevisionDate();
                             if(committerName != null && commitDate != null) {
@@ -187,11 +188,12 @@ public final class VCSLabelService implements Disposable {
                                 if(!committerName.equals(author) && author != null) {
                                     committerName = committerName + "(" + author + ")";
                                 }
-                                vcsMessage = "  " + df.format(commitDate) + " " + committerName;
+                                vcsMessage = " " + shortRevision + " " + df.format(commitDate) + " " + committerName;
                             }
                         }
                     }
                     addCache(file, vcsMessage);
+                    calculatingFileSet.remove(file.getPath());
                     file = pendingFileQueue.poll(1, TimeUnit.SECONDS);
                 }
                 if(poolCount > 0){
@@ -225,32 +227,33 @@ public final class VCSLabelService implements Disposable {
                 return;
             }
             boolean branchChanged = oldCurrentBranchName != null && !oldCurrentBranchName.equals(currentBranchName);
+            if(branchChanged) {
+                labelCache.clear();
+                refreshProjectView();
+            }
             for(GitLocalBranch gitLocalBranch : branches.getLocalBranches()) {
                 String name = gitLocalBranch.getName();
                 Hash hash = branches.getHash(gitLocalBranch);
                 String revision = hash != null ? hash.asString().substring(0, 16) : "";
-                String value = latestBranchRevision.put(name, revision);
-                if(branchChanged) {
-                    labelCache.clear();
-                    refreshProjectView();
-                } else if(value != null && !revision.equals(value) && name.equals(currentBranchName)) {
+                String oldRevision = latestBranchRevision.put(name, revision);
+                if(oldRevision != null && !branchChanged && !revision.equals(oldRevision) && name.equals(currentBranchName)) {
                     try {
-                        List<CommittedChangeList> committedChanges = getCommittedChanges(revision, value);
+                        List<CommittedChangeList> committedChanges = getCommittedChanges(revision, oldRevision);
                         Set<VirtualFile> changedFileSet = new HashSet<>();
                         for(CommittedChangeList committedChangeList : committedChanges) {
                             Collection<Change> changes = committedChangeList.getChanges();
                             for(Change change : changes) {
                                 VirtualFile virtualFile = change.getVirtualFile();
                                 if(virtualFile != null) {
-                                    evict(virtualFile);
                                     changedFileSet.add(virtualFile);
                                 }
                             }
                         }
                         if(!changedFileSet.isEmpty()) {
                             pendingFileQueue.addAll(changedFileSet);
-                            CountDownLatch latch = new CountDownLatch(3);
-                            for (int i = 0; i < 3; i++) {
+                            CountDownLatch latch = new CountDownLatch(5);
+                            for (int i = 0; i < 5; i++) {
+                                calculatorCount.incrementAndGet();
                                 executorService.submit(new LabelCalculator(latch));
                             }
                             latch.await();
