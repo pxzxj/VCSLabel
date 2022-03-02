@@ -123,8 +123,8 @@ public final class VCSLabelService implements Disposable {
 
     public void refreshProjectView() {
         ApplicationManager.getApplication().invokeLater(() -> {
-            final ProjectView projectView = ProjectView.getInstance(project);
             if(project.isOpen()) {
+                final ProjectView projectView = ProjectView.getInstance(project);
                 projectView.refresh();
             }
         });
@@ -200,19 +200,29 @@ public final class VCSLabelService implements Disposable {
                     addCache(file, vcsMessage);
                     calculatingFileSet.remove(file.getPath());
                     file = pendingFileQueue.poll(1, TimeUnit.SECONDS);
+                    LOG.debug(Thread.currentThread().getName() + " :  " + pendingFileQueue.size());
                 }
                 if(poolCount > 0){
                     LOG.debug("Refresh Project View: " + pendingFileQueue.size());
                     LOG.debug("Cache Size: " + labelCache.size());
                     refreshProjectView();
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            }
+            catch (VcsException e) {
+                calculatingFileSet.remove(file.getPath());
+                if(e.getClass().getName().contains("GitRepositoryNotFoundException")) {
+                    pendingFileQueue.add(file);
+                } else {
+                    LOG.error(e);
+                }
+            }
+            catch (Exception e) {
                 if(file != null) {
                     calculatingFileSet.remove(file.getPath());
                 }
+                LOG.error(e);
             } finally {
-                LOG.debug("current calculator count: " + calculatorCount.decrementAndGet());
+                LOG.debug(Thread.currentThread().getName() + " finished. current calculator count: " + calculatorCount.decrementAndGet());
                 if(latch != null) {
                     latch.countDown();
                 }
