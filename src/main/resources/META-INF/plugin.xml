@@ -15,6 +15,7 @@
       <h3>version 2.2</h3>
       <ul>
         <li>fixed an AlreadyDisposedException</li>
+        <li>speed up label render</li>
       </ul>
       <h3>version 2.1</h3>
       <ul>

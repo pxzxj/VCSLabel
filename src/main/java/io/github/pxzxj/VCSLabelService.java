@@ -17,6 +17,8 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitFileRevision;
@@ -84,6 +86,12 @@ public final class VCSLabelService implements Disposable {
 
     public void decorateVcsTag(ProjectViewNode<?> node, PresentationData data){
         VirtualFile vFile =  node.getVirtualFile();
+        if(vFile == null) {
+            Object value = node.getValue();
+            if(value instanceof PsiElement) {
+                vFile = PsiUtilCore.getVirtualFile((PsiElement) value);
+            }
+        }
         String vcsMessage = null;
         if((svnVcs != null || gitVcs != null) && vFile != null){
             vcsMessage = getCache(vFile);
@@ -139,6 +147,7 @@ public final class VCSLabelService implements Disposable {
 
     @Override
     public void dispose() {
+        latestBranchRevision.clear();
         pendingFileQueue.clear();
         calculatingFileSet.clear();
         labelCache.clear();
@@ -166,6 +175,7 @@ public final class VCSLabelService implements Disposable {
                 SimpleDateFormat df = new SimpleDateFormat("yy-MM-dd aHH:mm", locale);
                 while(file != null){
                     if(!calculatingFileSet.add(file.getPath())) {
+                        file = pendingFileQueue.poll(1, TimeUnit.SECONDS);
                         continue;
                     }
                     poolCount++;
