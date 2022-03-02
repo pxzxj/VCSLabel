@@ -89,7 +89,7 @@ public final class VCSLabelService implements Disposable {
             vcsMessage = getCache(vFile);
             if(vcsMessage == null){
                 pendingFileQueue.add(vFile);
-                if(calculatorCount.get() < 5){
+                if(calculatorCount.get() < 6){
                     calculatorCount.incrementAndGet();
                     executorService.submit(new LabelCalculator());
                 }
@@ -124,7 +124,9 @@ public final class VCSLabelService implements Disposable {
     public void refreshProjectView() {
         ApplicationManager.getApplication().invokeLater(() -> {
             final ProjectView projectView = ProjectView.getInstance(project);
-            projectView.refresh();
+            if(project.isOpen()) {
+                projectView.refresh();
+            }
         });
     }
 
@@ -162,7 +164,10 @@ public final class VCSLabelService implements Disposable {
                 int poolCount = 0;
                 file = pendingFileQueue.poll(1, TimeUnit.SECONDS);
                 SimpleDateFormat df = new SimpleDateFormat("yy-MM-dd aHH:mm", locale);
-                while(file != null && calculatingFileSet.add(file.getPath())){
+                while(file != null){
+                    if(!calculatingFileSet.add(file.getPath())) {
+                        continue;
+                    }
                     poolCount++;
                     String vcsMessage = "";
                     if(svnVcs != null) {
@@ -197,18 +202,17 @@ public final class VCSLabelService implements Disposable {
                     file = pendingFileQueue.poll(1, TimeUnit.SECONDS);
                 }
                 if(poolCount > 0){
-                    //backup solution: compare cache size, refresh when different
                     LOG.debug("Refresh Project View: " + pendingFileQueue.size());
                     LOG.debug("Cache Size: " + labelCache.size());
                     refreshProjectView();
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
-                LOG.debug("current calculator count: " + calculatorCount.decrementAndGet());
                 if(file != null) {
                     calculatingFileSet.remove(file.getPath());
                 }
+            } finally {
+                LOG.debug("current calculator count: " + calculatorCount.decrementAndGet());
                 if(latch != null) {
                     latch.countDown();
                 }

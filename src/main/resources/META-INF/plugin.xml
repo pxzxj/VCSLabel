@@ -12,6 +12,10 @@
     <br><br>
     </html>]]></description>
     <change-notes><![CDATA[
+      <h3>version 2.2</h3>
+      <ul>
+        <li>fixed an AlreadyDisposedException</li>
+      </ul>
       <h3>version 2.1</h3>
       <ul>
         <li>add Git support</li>
