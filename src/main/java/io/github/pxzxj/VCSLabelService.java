@@ -223,14 +223,14 @@ public final class VCSLabelService implements Disposable {
                 if(e.getClass().getName().contains("GitRepositoryNotFoundException")) {
                     pendingFileQueue.add(file);
                 } else {
-                    LOG.error(e);
+                    e.printStackTrace();
                 }
             }
             catch (Exception e) {
                 if(file != null) {
                     calculatingFileSet.remove(file.getPath());
                 }
-                LOG.error(e);
+                e.printStackTrace();
             } finally {
                 LOG.debug(Thread.currentThread().getName() + " finished. current calculator count: " + calculatorCount.decrementAndGet());
                 if(latch != null) {

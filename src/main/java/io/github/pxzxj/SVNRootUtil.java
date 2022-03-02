@@ -22,7 +22,7 @@ public class SVNRootUtil {
             return isSVNRoot(Paths.get(rootDir));
         }
         catch (InvalidPathException e) {
-            LOG.warn(e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }

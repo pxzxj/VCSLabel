@@ -30,7 +30,6 @@ public class SVNUpdateListener implements UpdatedFilesListener {
 
     @Override
     public void consume(Set<String> strings) {
-        LOG.warn("Get a Update Notification!");
         ApplicationManager.getApplication().invokeLater(() -> {
             LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
             VCSLabelService labelService = ServiceManager.getService(project, VCSLabelService.class);
