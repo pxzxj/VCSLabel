@@ -93,7 +93,7 @@ public final class VCSLabelService implements Disposable {
             }
         }
         String vcsMessage = null;
-        if((svnVcs != null || gitVcs != null) && vFile != null){
+        if((svnVcs != null || gitVcs != null) && isUnderProject(vFile)){
             vcsMessage = getCache(vFile);
             if(vcsMessage == null){
                 pendingFileQueue.add(vFile);
@@ -143,6 +143,16 @@ public final class VCSLabelService implements Disposable {
             gitRepository = gp;
         }
         handlerService.submit(new GitRepositoryChangeHandler());
+    }
+
+    public boolean isUnderProject(VirtualFile file) {
+        while (file != null) {
+            if(file.equals(projectVirtualFile)) {
+                return true;
+            }
+            file = file.getParent();
+        }
+        return false;
     }
 
     @Override
@@ -219,6 +229,7 @@ public final class VCSLabelService implements Disposable {
                 }
             }
             catch (VcsException e) {
+                LOG.info(e.getMessage());
                 calculatingFileSet.remove(file.getPath());
                 if(e.getClass().getName().contains("GitRepositoryNotFoundException")) {
                     pendingFileQueue.add(file);

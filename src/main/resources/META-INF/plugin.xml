@@ -12,9 +12,13 @@
     <br><br>
     </html>]]></description>
     <change-notes><![CDATA[
+      <h3>version 2.3</h3>
+      <ul>
+        <li>fix a GitRepositoryNotFoundException when open Scratches and Consoles folder</li>
+      </ul>
       <h3>version 2.2</h3>
       <ul>
-        <li>fixed an AlreadyDisposedException</li>
+        <li>fix an AlreadyDisposedException</li>
         <li>speed up label render</li>
       </ul>
       <h3>version 2.1</h3>
