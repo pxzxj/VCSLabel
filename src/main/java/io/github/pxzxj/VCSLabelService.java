@@ -69,13 +69,13 @@ public final class VCSLabelService implements Disposable {
         if(projectPath != null) {
             projectVirtualFile = LocalFileSystem.getInstance().findFileByIoFile(new File(projectPath));
             svnVcs = SvnVcs.getInstance(project);
-            if(svnVcs != null && !SVNRootUtil.isSVNRoot(projectPath)) {
+            if(svnVcs != null && !SVNUtil.isUnderSVN(projectVirtualFile)) {
                 svnVcs = null;
             }
             gitVcs = (GitVcs)ProjectLevelVcsManager.getInstance(project).findVcsByName(GitVcs.NAME);
             ProgressManager.checkCanceled();
             if(gitVcs != null) {
-                if(GitUtil.isGitRoot(projectPath)) {
+                if(GitUtil.isUnderGit(projectVirtualFile)) {
                     vcsHistoryProvider = gitVcs.getVcsHistoryProvider();
                 } else {
                     gitVcs = null;
