@@ -1,6 +1,8 @@
 package io.github.pxzxj;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -11,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public class SVNUtil {
@@ -33,7 +36,7 @@ public class SVNUtil {
 
     public static boolean isUnderSVN(@NotNull VirtualFile vFile) {
         try {
-            return findSVNRootFor(vFile.toNioPath()) != null;
+            return findSVNRootFor(virtualFileToNioPath(vFile)) != null;
         }
         catch (InvalidPathException e) {
             LOG.warn(e.getMessage());
@@ -47,7 +50,7 @@ public class SVNUtil {
             Path root = path;
             while (root != null) {
                 if (isSVNRoot(root)) {
-                    return LocalFileSystem.getInstance().findFileByNioFile(root);
+                    return LocalFileSystem.getInstance().findFileByPath(path.toAbsolutePath().toString());
                 }
                 root = root.getParent();
             }
@@ -57,5 +60,14 @@ public class SVNUtil {
             LOG.warn(e.getMessage());
             return null;
         }
+    }
+
+    public static @NotNull Path virtualFileToNioPath(VirtualFile virtualFile) {
+        String path = virtualFile.getPath();
+        if (StringUtil.endsWithChar(path, ':') && path.length() == 2 && SystemInfo.isWindows) {
+            // makes 'C:' resolve to a root directory of the drive C:, not the current directory on that drive
+            path += '/';
+        }
+        return Paths.get(path);
     }
 }

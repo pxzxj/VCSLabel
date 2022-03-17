@@ -26,3 +26,10 @@ intellij {
     downloadSources = true
     updateSinceUntilBuild = false
 }
+
+/**
+ * for runPluginVerifier
+patchPluginXml {
+    sinceBuild = "193"
+    untilBuild = "221"
+}*/
