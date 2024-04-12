@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>com.ponshine.svnlabel</id>
+    <id>com.ponsh1ne.svnlabel</id>
     <name>VCSLabel</name>
     <vendor email="pudge.zxj@gmail.com" url="https://github.com/pxzxj">pxzxj</vendor>
     <depends>Subversion</depends>
